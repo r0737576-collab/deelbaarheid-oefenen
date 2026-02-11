@@ -9,7 +9,7 @@
   :root{
     --bg:#f7f8fb; --card:#ffffff; --ink:#111; --muted:#4b5563;
     --ok:#1ea97c; --bad:#d64545; --warn:#f59e0b; --line:#e5e7eb;
-    --accent:#2563eb;
+    --accent:#2563eb; --accent-dark:#1e40af;
   }
 
   body{
@@ -17,10 +17,7 @@
     color:var(--ink); font-family:Arial, sans-serif;
   }
 
-  .wrap{
-    max-width:900px; margin:0 auto; padding:20px;
-  }
-
+  .wrap{ max-width:900px; margin:0 auto; padding:20px; }
   h1{ margin:0 0 8px; font-size:24px; }
   p{ margin:6px 0; color:var(--muted); }
 
@@ -30,6 +27,15 @@
     box-shadow:0 8px 20px rgba(0,0,0,.05);
   }
 
+  .bar{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px;
+  }
+  .bar label{ font-weight:700; }
+  select{
+    padding:8px 10px; border:1px solid var(--line); border-radius:8px;
+    background:#fff; font-size:14px;
+  }
+
   button{
     padding:10px 14px; margin:6px 8px 6px 0;
     font-size:15px; font-weight:600;
@@ -37,6 +43,7 @@
     cursor:pointer; color:#fff;
   }
   #btn-new{ background:var(--accent); }
+  #btn-new:hover{ background:var(--accent-dark); }
   #btn-check{ background:#374151; }
   #btn-pdf{ background:#0f172a; }
   button:disabled{ opacity:.6; cursor:not-allowed; }
@@ -63,43 +70,36 @@
   .bad{ background:#fde8e8; border-color:#f7caca; }
   .miss{ background:#fff7ed; border-color:#fed7aa; }
 
-  .score{
-    margin-top:12px; font-size:17px; font-weight:700;
-  }
-  .mistakes{
-    margin-top:8px; font-size:14px;
-  }
+  .score{ margin-top:12px; font-size:17px; font-weight:700; }
+  .mistakes{ margin-top:8px; font-size:14px; }
 
   /* Feedbackkleuren */
   .correct{ background:#e6f7f1; }
   .wrong-checked{ background:#fde8e8; }
   .wrong-missed{ outline:2px solid var(--warn); }
 
-  /* Uitlegblok zichtbaar tijdens oefenen */
-  #rule-box{
-    display:block;
-    margin-top:12px;
+  /* Uitlegblok */
+  #rule-box{ margin-top:12px; }
+  .rule{
+    background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; position:relative;
+  }
+  .rule h3{
+    margin:0 0 6px; font-size:16px;
+  }
+  .rule .close{
+    position:absolute; right:10px; top:8px; border:none; background:transparent;
+    font-size:18px; line-height:1; cursor:pointer; color:#334155;
+  }
+  .hdr-btn{
+    cursor:pointer; color:#2563eb; text-decoration:underline;
   }
 
-  /* PRINT MODE: enkel oefentabel + score + fouten, geen knoppen/legend/uitleg */
+  /* PRINT MODE: enkel oefentabel + score + fouten, geen knoppen/legend/uitleg/keuze */
   @media print {
-    body *{
-      visibility:hidden !important;
-    }
-    #print-area, #print-area *{
-      visibility:visible !important;
-    }
-    #print-area{
-      position:absolute; top:0; left:0; width:100%;
-    }
-    button, .legend{
-      display:none !important;
-    }
-    /* Uitleg verbergen in PDF */
-    #rule-box{
-      display:none !important;
-      visibility:hidden !important;
-    }
+    body *{ visibility:hidden !important; }
+    #print-area, #print-area *{ visibility:visible !important; }
+    #print-area{ position:absolute; top:0; left:0; width:100%; }
+    button, .legend, #rule-box, .bar{ display:none !important; }
   }
 </style>
 
@@ -111,9 +111,21 @@
   <p>Vink aan welke delers passen. Klik op een kolomtitel voor uitleg. Klik op “Nakijken” voor feedback.</p>
 
   <div class="card">
-    <button id="btn-new">Nieuwe oefening (5 getallen)</button>
-    <button id="btn-check" disabled>Nakijken</button>
-    <button id="btn-pdf" disabled>Print PDF</button>
+
+    <!-- Moeilijkheidskeuze -->
+    <div class="bar">
+      <label for="difficulty">Moeilijkheid:</label>
+      <select id="difficulty">
+        <option value="makkelijk">Makkelijk (100–999, delers: 2, 5)</option>
+        <option value="gemiddeld">Gemiddeld (1000–9999, delers: 2,3,4,5,10)</option>
+        <option value="moeilijk" selected>Moeilijk (10.000–999.999, alle delers)</option>
+        <option value="expert">Expert (grote getallen, alle delers)</option>
+      </select>
+
+      <button id="btn-new">Nieuwe oefening (5 getallen)</button>
+      <button id="btn-check" disabled>Nakijken</button>
+      <button id="btn-pdf" disabled>Print PDF</button>
+    </div>
 
     <div id="print-area">
       <div id="exercise"></div>
@@ -121,7 +133,7 @@
       <div id="mistakes" class="mistakes"></div>
     </div>
 
-    <!-- Uitleg verschijnt hier bij klik op /2, /3, ... -->
+    <!-- Uitleg verschijnt hier (met kruisje) -->
     <div id="rule-box"></div>
 
     <div class="legend">
@@ -133,36 +145,108 @@
 </div>
 
 <script>
-const DIVS=[2,3,4,5,6,8,9,10,12];
+/* === Config per moeilijkheid === */
+const CONFIGS = {
+  makkelijk:  { min:100,    max:999,    divisors:[2,5] },
+  gemiddeld:  { min:1000,   max:9999,   divisors:[2,3,4,5,10] },
+  moeilijk:   { min:10000,  max:999999, divisors:[2,3,4,5,6,8,9,10,12] },
+  expert:     { min:100000, max:999999, divisors:[2,3,4,5,6,8,9,10,12] }
+};
+// Startniveau: Moeilijk (zoals je koos)
+let currentDiff = 'moeilijk';
 
+/* === Uitlegregels === */
 const RULES={
-  2:{t:"Deelbaar door 2",x:"Laatste cijfer is even (0, 2, 4, 6 of 8).",e:"Voorbeeld: 98 → 8 is even → deelbaar door 2."},
-  3:{t:"Deelbaar door 3",x:"Som van de cijfers is deelbaar door 3.",e:"Voorbeeld: 483 → 4+8+3=15 → deelbaar door 3."},
-  4:{t:"Deelbaar door 4",x:"Laatste twee cijfers vormen een getal deelbaar door 4 (of 00).",e:"Voorbeeld: 132 → 32 is deelbaar door 4."},
-  5:{t:"Deelbaar door 5",x:"Laatste cijfer is 0 of 5.",e:"Voorbeelden: 78435, 54720."},
-  6:{t:"Deelbaar door 6",x:"Deelbaar door 2 én door 3.",e:"Voorbeeld: 684 is even en 6+8+4=18 → deelbaar door 3."},
-  8:{t:"Deelbaar door 8",x:"Laatste drie cijfers vormen een getal deelbaar door 8 (of 000).",e:"Voorbeeld: 7160 → 160 is deelbaar door 8."},
-  9:{t:"Deelbaar door 9",x:"Som van de cijfers is deelbaar door 9.",e:"Voorbeeld: 6588 → 6+5+8+8=27 → deelbaar door 9."},
-  10:{t:"Deelbaar door 10",x:"Laatste cijfer is 0.",e:""},
-  12:{t:"Deelbaar door 12",x:"Deelbaar door 3 én door 4.",e:""}
+  2:{t:"Deelbaar door 2",x:"Als het laatste cijfer even is (0, 2, 4, 6, 8), dan is het getal deelbaar door 2.",e:"Voorbeeld: 98 → 8 is even → deelbaar door 2."},
+  3:{t:"Deelbaar door 3",x:"Als de som van de cijfers deelbaar is door 3, dan is het getal deelbaar door 3.",e:"Voorbeeld: 483 → 4+8+3=15 → deelbaar door 3."},
+  4:{t:"Deelbaar door 4",x:"Kijk naar de laatste twee cijfers. Als die deelbaar zijn door 4 (of 00), dan is het hele getal deelbaar door 4.",e:"Voorbeeld: 132 → 32 is deelbaar door 4."},
+  5:{t:"Deelbaar door 5",x:"Een getal is deelbaar door 5 als het laatste cijfer 0 of 5 is.",e:"Voorbeelden: 78435 of 54720."},
+  6:{t:"Deelbaar door 6",x:"Een getal is deelbaar door 6 als het deelbaar is door 2 én door 3.",e:"Voorbeeld: 684 is even en 6+8+4=18 (deelbaar door 3)."},
+  8:{t:"Deelbaar door 8",x:"Kijk naar de laatste drie cijfers. Als die deelbaar zijn door 8 (of 000), dan is het hele getal deelbaar door 8.",e:"Voorbeeld: 7160 → 160 is deelbaar door 8."},
+  9:{t:"Deelbaar door 9",x:"Als de som van de cijfers deelbaar is door 9, dan kun je het getal delen door 9.",e:"Voorbeeld: 6588 → 6+5+8+8=27 (deelbaar door 9)."},
+  10:{t:"Deelbaar door 10",x:"Een getal is deelbaar door 10 als het laatste cijfer 0 is.",e:""},
+  12:{t:"Deelbaar door 12",x:"Een getal is deelbaar door 12 als het deelbaar is door 3 én door 4.",e:""}
 };
 
-let numbers=[];
-let checked=[];
-let graded=false;
+/* === State === */
+let numbers=[];            // huidige 5 getallen
+let checked=[];            // aangevinkte delers per rij
+let graded=false;          // is er al nagekeken?
 
-function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-function hasDiv(n){ return DIVS.some(d=>n%d===0); }
-function divsOf(n){ return DIVS.filter(d=>n%d===0); }
+/* === Helpers === */
+function DIVS(){ return CONFIGS[currentDiff].divisors; }
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function hasAnyDiv(n){ return DIVS().some(d => n % d === 0); }
+function divisorsOf(n){ return DIVS().filter(d => n % d === 0); }
 
+/* === UI Builders === */
+function buildTable(){
+  let html = "<table><thead><tr><th>Getal</th>";
+  DIVS().forEach(d=>{
+    html += `<th><span class="hdr-btn" onclick="showRule(${d})">/${d}</span></th>`;
+  });
+  html += "</tr></thead><tbody>";
+
+  numbers.forEach((n,i)=>{
+    html += `<tr><td>${n}</td>`;
+    DIVS().forEach(d=>{
+      html += `<td class="cell"><input type="checkbox" data-r="${i}" data-d="${d}"></td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  document.querySelector("#exercise").innerHTML = html;
+
+  // checkbox listeners
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.onchange=()=>{
+      const r = cb.dataset.r, d = cb.dataset.d;
+      checked[r][d] = cb.checked;
+      if(graded) clearFeedback();
+    };
+  });
+}
+
+function showRule(d){
+  const r = RULES[d];
+  if(!r) return;
+  document.querySelector("#rule-box").innerHTML =
+    `<div class="rule">
+       <button class="close" title="Verbergen" onclick="hideRule()">×</button>
+       <h3>${r.t}</h3>
+       <div>${r.x}</div>
+       ${r.e ? `<div style="color:#4b5563;margin-top:6px"><i>${r.e}</i></div>` : ""}
+     </div>`;
+}
+function hideRule(){
+  document.querySelector("#rule-box").innerHTML = "";
+}
+
+function clearFeedback(){
+  graded=false;
+  document.querySelector("#result").innerHTML = "";
+  document.querySelector("#mistakes").innerHTML = "";
+  document.querySelectorAll(".cell").forEach(td=>{
+    td.classList.remove("correct","wrong-checked","wrong-missed");
+  });
+}
+
+/* === Actions === */
 function newExercise(){
-  numbers=[];
-  while(numbers.length<5){
-    const x=rand(1000,999999);
-    if(hasDiv(x)) numbers.push(x);
+  // genereer 5 getallen met minstens 1 juiste deler
+  const {min,max} = CONFIGS[currentDiff];
+  numbers = [];
+  while(numbers.length < 5){
+    const x = rnd(min, max);
+    if(hasAnyDiv(x)) numbers.push(x);
   }
-  checked=numbers.map(()=>{ const o={}; DIVS.forEach(d=>o[d]=false); return o; });
+  // reset checks
+  checked = numbers.map(()=>{
+    const o={}; DIVS().forEach(d=>o[d]=false); return o;
+  });
 
+  hideRule();
   graded=false;
   buildTable();
   clearFeedback();
@@ -171,68 +255,21 @@ function newExercise(){
   document.querySelector("#btn-pdf").disabled=true;
 }
 
-function buildTable(){
-  let html="<table><thead><tr><th>Getal</th>";
-  DIVS.forEach(d=>{
-    html+=`<th><span class="hdr-btn" style="cursor:pointer;color:#2563eb;text-decoration:underline" onclick="showRule(${d})">/${d}</span></th>`;
-  });
-  html+="</tr></thead><tbody>";
-
-  numbers.forEach((n,i)=>{
-    html+=`<tr><td>${n}</td>`;
-    DIVS.forEach(d=>{
-      html+=`<td class="cell"><input type="checkbox" data-r="${i}" data-d="${d}"></td>`;
-    });
-    html+="</tr>";
-  });
-  html+="</tbody></table>";
-
-  document.querySelector("#exercise").innerHTML=html;
-
-  document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
-    cb.onchange=()=>{
-      const r=cb.dataset.r, d=cb.dataset.d;
-      checked[r][d]=cb.checked;
-      if(graded) clearFeedback();
-    };
-  });
-}
-
-function showRule(d){
-  const r=RULES[d];
-  if(!r) return;
-  document.querySelector("#rule-box").innerHTML =
-    `<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px">
-       <div style="font-weight:700;margin-bottom:4px">/${d} — ${r.t}</div>
-       <div>${r.x}</div>
-       ${r.e?`<div style="color:#4b5563;margin-top:6px"><i>${r.e}</i></div>`:""}
-     </div>`;
-}
-
-function clearFeedback(){
-  graded=false;
-  document.querySelector("#result").innerHTML="";
-  document.querySelector("#mistakes").innerHTML="";
-  document.querySelectorAll(".cell").forEach(td=>{
-    td.classList.remove("correct","wrong-checked","wrong-missed");
-  });
-}
-
 function grade(){
   graded=true;
   let total=0, correct=0;
   const mistakes=[];
 
   numbers.forEach((n,i)=>{
-    const real=new Set(divsOf(n));
+    const real = new Set(divisorsOf(n));
     const rowErrors=[];
-    const tds=document.querySelectorAll(`tbody tr:nth-child(${i+1}) td.cell`);
+    const tds = document.querySelectorAll(`tbody tr:nth-child(${i+1}) td.cell`);
     let idx=0;
 
-    DIVS.forEach(d=>{
-      const td=tds[idx++];
-      const want=real.has(d);
-      const got=checked[i][d];
+    DIVS().forEach(d=>{
+      const td = tds[idx++];
+      const want = real.has(d);
+      const got = !!checked[i][d];
       total++;
 
       if(want && got){
@@ -250,30 +287,36 @@ function grade(){
       }
     });
 
-    if(rowErrors.length>0){
+    if(rowErrors.length){
       mistakes.push(`Getal ${n}: fout bij ${rowErrors.join(", ")}`);
     }
   });
 
-  document.querySelector("#result").innerHTML=`Score: ${correct} / ${total}`;
+  document.querySelector("#result").innerHTML = `Score: ${correct} / ${total}`;
   document.querySelector("#btn-pdf").disabled=false;
-
-  if(mistakes.length){
-    document.querySelector("#mistakes").innerHTML =
-      `<b>Overzicht fouten:</b><br>${mistakes.join("<br>")}`;
-  }else{
-    document.querySelector("#mistakes").innerHTML="Perfect! Alles juist.";
-  }
+  document.querySelector("#mistakes").innerHTML =
+    mistakes.length ? `<b>Overzicht fouten:</b><br>${mistakes.join("<br>")}` : "Mooi! Alles juist.";
 }
 
 function printPDF(){
   window.print();
 }
 
+/* === Events === */
 window.addEventListener("DOMContentLoaded", ()=>{
+  // Moeilijkheids-keuze
+  const sel = document.querySelector("#difficulty");
+  sel.addEventListener("change", ()=>{
+    currentDiff = sel.value;   // makkelijk | gemiddeld | moeilijk | expert
+    newExercise();
+  });
+
   document.querySelector("#btn-new").addEventListener("click", newExercise);
   document.querySelector("#btn-check").addEventListener("click", grade);
   document.querySelector("#btn-pdf").addEventListener("click", printPDF);
+
+  // start met Moeilijk
+  document.querySelector("#difficulty").value = currentDiff;
   newExercise();
 });
 </script>
