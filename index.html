@@ -63,7 +63,7 @@
 <div class="wrap">
 
 <h1>Online deelbaarheidsoefeningen</h1>
-<p>Vink aan of het getal deelbaar is door /2 /3 /4 /5 /6 /8 /9 /10 /12.  
+<p>Vink aan of het getal deelbaar is door ,2 ,3 ,4 ,5 ,6 ,8 ,9 ,10 en/of 12.  
 Klik op een kolomtitel voor uitleg. Klik op “Nakijken” om feedback te krijgen.</p>
 
 <div class="card">
@@ -93,3 +93,127 @@ const RULES={
 2:{t:"Deelbaar door 2",x:"Laatste cijfer is even (0,2,4,6,8).",e:"Voorbeeld: 98 → 8 is even → deelbaar door 2."},
 3:{t:"Deelbaar door 3",x:"Som van cijfers is deelbaar door 3.",e:"Voorbeeld: 483 → 4+8+3=15 → deelbaar door 3."},
 4:{t:"Deelbaar door 4",x:"Laatste twee cijfers vormen een getal deelbaar door 4.",e:"Voorbeeld: 132 → 32 is deelbaar door 4."},
+5:{t:"Deelbaar door 5",x:"Laatste cijfer is 0 of 5.",e:"Voorbeelden: 78435, 54720."},
+6:{t:"Deelbaar door 6",x:"Deelbaar door 2 én door 3.",e:"Voorbeeld: 684 is even en 6+8+4=18 → deelbaar door 3."},
+8:{t:"Deelbaar door 8",x:"Laatste drie cijfers vormen getal deelbaar door 8.",e:"Voorbeeld: 7160 → 160 is deelbaar door 8."},
+9:{t:"Deelbaar door 9",x:"Som van cijfers is deelbaar door 9.",e:"Voorbeeld: 6588 → 6+5+8+8=27 → deelbaar door 9."},
+10:{t:"Deelbaar door 10",x:"Laatste cijfer is 0.",e:""},
+12:{t:"Deelbaar door 12",x:"Deelbaar door 3 én door 4.",e:""}
+};
+
+let numbers=[];
+let checked=[];
+let graded=false;
+
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function hasDiv(n){return DIVS.some(d=>n%d===0);}
+function divsOf(n){return DIVS.filter(d=>n%d===0);}
+
+function newExercise(){
+  numbers=[];
+  while(numbers.length<5){
+    let x=rand(1000,999999);
+    if(hasDiv(x)) numbers.push(x);
+  }
+  checked=numbers.map(()=>{let o={};DIVS.forEach(d=>o[d]=false);return o;});
+  graded=false;
+  buildTable();
+  clearFeedback();
+  document.querySelector("#btn-check").disabled=false;
+  document.querySelector("#btn-reset").disabled=false;
+}
+
+function buildTable(){
+  let html="<table><thead><tr><th>Getal</th>";
+  for(const d of DIVS){
+    html+=`<th><span class="hdr-btn" onclick="showRule(${d})">/${d}</span></th>`;
+  }
+  html+="</tr></thead><tbody>";
+  numbers.forEach((n,i)=>{
+    html+=`<tr><td>${n}</td>`;
+    DIVS.forEach(d=>{
+      html+=`<td class="cell"><input type="checkbox" data-r="${i}" data-d="${d}"></td>`;
+    });
+    html+="</tr>";
+  });
+  html+="</tbody></table>";
+  document.querySelector("#exercise").innerHTML=html;
+
+  document.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+    cb.onchange=()=>{
+      let r=cb.dataset.r, d=cb.dataset.d;
+      checked[r][d]=cb.checked;
+      if(graded) clearFeedback();
+    };
+  });
+}
+
+function showRule(d){
+  let r=RULES[d];
+  document.querySelector("#rule-box").innerHTML=
+    `<div class="rule-box"><div class="rule-title">/${d} — ${r.t}</div>${r.x}<br><i>${r.e}</i></div>`;
+}
+
+function clearFeedback(){
+  graded=false;
+  document.querySelector("#result").innerHTML="";
+  document.querySelector("#mistakes").innerHTML="";
+  document.querySelectorAll("td.cell").forEach(td=>{
+    td.classList.remove("correct","wrong-checked","wrong-missed");
+  });
+}
+
+function grade(){
+  graded=true;
+  let total=0, correct=0;
+  let mistakes=[];
+
+  numbers.forEach((n,i)=>{
+    let real=new Set(divsOf(n));
+    let rowMist=[];
+
+    let tds=document.querySelectorAll(`tbody tr:nth-child(${i+1}) td.cell`);
+    let k=0;
+    DIVS.forEach(d=>{
+      let td=tds[k++];
+      let want=real.has(d);
+      let got=checked[i][d];
+      total++;
+
+      if(want && got){
+        td.classList.add("correct");
+        correct++;
+      }else if(!want && !got){
+        td.classList.add("correct");
+        correct++;
+      }else if(!want && got){
+        td.classList.add("wrong-checked");
+        rowMist.push("/"+d);
+      }else if(want && !got){
+        td.classList.add("wrong-missed");
+        rowMist.push("/"+d);
+      }
+    });
+    if(rowMist.length){
+      mistakes.push(`Getal ${n}: fout bij ${rowMist.join(", ")}`);
+    }
+  });
+
+  document.querySelector("#result").innerHTML=`Score: ${correct} / ${total}`;
+  document.querySelector("#mistakes").innerHTML=
+    mistakes.length ? `<b>Overzicht fouten:</b><br>${mistakes.join("<br>")}` : "Mooi! Alles correct.";
+}
+
+document.querySelector("#btn-new").onclick=newExercise;
+document.querySelector("#btn-check").onclick=grade;
+document.querySelector("#btn-reset").onclick=()=>{
+  checked.forEach(r=>DIVS.forEach(d=>r[d]=false));
+  document.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false);
+  clearFeedback();
+};
+
+newExercise();
+</script>
+
+</body>
+</html>
