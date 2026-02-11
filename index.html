@@ -39,7 +39,6 @@
   #btn-new{ background:var(--accent); }
   #btn-check{ background:#374151; }
   #btn-pdf{ background:#0f172a; }
-
   button:disabled{ opacity:.6; cursor:not-allowed; }
 
   table{
@@ -71,30 +70,37 @@
     margin-top:8px; font-size:14px;
   }
 
-  /* feedback */
+  /* Feedback kleuren */
   .correct{ background:#e6f7f1; }
   .wrong-checked{ background:#fde8e8; }
   .wrong-missed{ outline:2px solid var(--warn); }
 
+  /* UITLEGVAK – ZICHTBAAR NORMAAL */
+  #rule-box {
+    display: block;
+    margin-top: 12px;
+  }
+
   /* PRINT MODE */
-@media print {
-  body *{
-    visibility:hidden !important;
+  @media print {
+    body *{
+      visibility:hidden !important;
+    }
+    #print-area, #print-area *{
+      visibility:visible !important;
+    }
+    #print-area{
+      position:absolute; top:0; left:0; width:100%;
+    }
+    button, .legend{
+      display:none !important;
+    }
+    /* Uitleg mag NIET mee in PDF */
+    #rule-box{
+      display:none !important;
+      visibility:hidden !important;
+    }
   }
-  #print-area, #print-area *{
-    visibility:visible !important;
-  }
-  #print-area{
-    position:absolute; top:0; left:0; width:100%;
-  }
-  button, .legend{
-    display:none !important;
-  }
-  /* Verberg uitleg in PDF */
-  #rule-box{
-    display:none !important;
-  }
-}
 </style>
     }
   }
