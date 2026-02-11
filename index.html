@@ -28,7 +28,20 @@
   }
 
   .bar{
-    display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+}
+
+.bar select{
+    min-width:180px;        /* maakt dropdown iets smaller */
+}
+
+.bar button{
+    white-space:nowrap;     /* voorkomt dat "Print PDF" splitst */
+}
   }
   .bar label{ font-weight:700; }
   select{
