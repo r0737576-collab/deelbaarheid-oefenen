@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Online Deelbaarheidsoefeningen</title>
 
 <style>
@@ -11,103 +11,125 @@
     --ok:#1ea97c; --bad:#d64545; --warn:#f59e0b; --line:#e5e7eb;
     --accent:#2563eb;
   }
-  body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Arial, sans-serif;}
-  .wrap{max-width:900px;margin:0 auto;padding:20px;}
-  h1{margin:0 0 8px;font-size:24px;}
-  p{margin:6px 0;color:var(--muted);}
+
+  body{
+    margin:0; padding:0; background:var(--bg);
+    color:var(--ink); font-family:Arial, sans-serif;
+  }
+
+  .wrap{
+    max-width:900px; margin:0 auto; padding:20px;
+  }
+
+  h1{ margin:0 0 8px; font-size:24px; }
+  p{ margin:6px 0; color:var(--muted); }
+
   .card{
-    background:var(--card);border:1px solid var(--line);border-radius:12px;
-    padding:16px;margin-top:12px;box-shadow:0 8px 20px rgba(0,0,0,.05);
+    background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:16px; margin-top:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.05);
   }
+
   button{
-    padding:10px 14px;margin:6px 8px 6px 0;font-size:15px;font-weight:600;
-    border:none;border-radius:8px;cursor:pointer;color:#fff;
+    padding:10px 14px; margin:6px 8px 6px 0;
+    font-size:15px; font-weight:600;
+    border:none; border-radius:8px;
+    cursor:pointer; color:#fff;
   }
-  #btn-new{background:var(--accent);}
-  #btn-check{background:#374151;}
-  #btn-reset{background:#0f172a;}
-  button:disabled{opacity:.6;cursor:not-allowed;}
+  #btn-new{ background:var(--accent); }
+  #btn-check{ background:#374151; }
+  #btn-pdf{ background:#0f172a; }
 
-  table{width:100%;border-collapse:collapse;margin-top:12px;}
+  button:disabled{ opacity:.6; cursor:not-allowed; }
+
+  table{
+    width:100%; border-collapse:collapse; margin-top:12px;
+  }
   th,td{
-    padding:8px;border:1px solid var(--line);text-align:center;
+    padding:8px; border:1px solid var(--line); text-align:center;
   }
-  th:first-child, td:first-child{text-align:right;padding-right:12px;}
+  th:first-child, td:first-child{
+    text-align:right; padding-right:12px;
+  }
 
-  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:13px;}
+  .legend{
+    display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;
+    font-size:13px;
+  }
   .pill{
-    padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#f3f4f6;
+    padding:4px 8px; border-radius:999px;
+    border:1px solid var(--line); background:#f3f4f6;
   }
-  .ok{background:#e6f7f1;border-color:#c7ecde;}
-  .bad{background:#fde8e8;border-color:#f7caca;}
-  .miss{background:#fff7ed;border-color:#fed7aa;}
+  .ok{ background:#e6f7f1; border-color:#c7ecde; }
+  .bad{ background:#fde8e8; border-color:#f7caca; }
+  .miss{ background:#fff7ed; border-color:#fed7aa; }
 
-  .score{margin-top:12px;font-size:17px;font-weight:700;}
-  .mistakes{margin-top:8px;font-size:14px;}
-
-  .rule-box{
-    margin-top:12px;background:#f8fafc;border:1px solid var(--line);
-    border-radius:10px;padding:10px;
+  .score{
+    margin-top:12px; font-size:17px; font-weight:700;
   }
-  .rule-title{font-weight:700;margin-bottom:4px;}
-  .hdr-btn{cursor:pointer;text-decoration:underline;color:var(--accent);}
+  .mistakes{
+    margin-top:8px; font-size:14px;
+  }
 
-  /* Feedbackkleuren */
-  .correct{background:#e6f7f1;}
-  .wrong-checked{background:#fde8e8;}
-  .wrong-missed{outline:2px solid var(--warn);}
+  /* feedback */
+  .correct{ background:#e6f7f1; }
+  .wrong-checked{ background:#fde8e8; }
+  .wrong-missed{ outline:2px solid var(--warn); }
+
+  /* PRINT MODE */
+  @media print {
+    body *{
+      visibility:hidden !important;
+    }
+    #print-area, #print-area *{
+      visibility:visible !important;
+    }
+    #print-area{
+      position:absolute; top:0; left:0;
+      width:100%;
+    }
+    button, .legend, #rule-box{
+      display:none !important;
+    }
+  }
 </style>
 
 </head>
 <body>
-<div class="wrap">
 
+<div class="wrap">
 <h1>Online deelbaarheidsoefeningen</h1>
-<p>Vink aan of het getal deelbaar is door ,2 ,3 ,4 ,5 ,6 ,8 ,9 ,10 en/of 12.  
-Klik op een kolomtitel voor uitleg. Klik op “Nakijken” om feedback te krijgen.</p>
+<p>Vink aan welke delers passen. Klik op “Nakijken” voor feedback.</p>
 
 <div class="card">
   <button id="btn-new">Nieuwe oefening (5 getallen)</button>
   <button id="btn-check" disabled>Nakijken</button>
-  <button id="btn-reset" disabled>Herbegin</button>
+  <button id="btn-pdf" disabled>Print PDF</button>
 
-  <div id="exercise"></div>
+  <div id="print-area">
+    <div id="exercise"></div>
+    <div id="result" class="score"></div>
+    <div id="mistakes" class="mistakes"></div>
+  </div>
 
   <div class="legend">
     <span class="pill ok">✓ correct</span>
-    <span class="pill bad">✗ fout (aangevinkt maar niet deelbaar)</span>
-    <span class="pill miss">◻ moest aangevinkt worden</span>
+    <span class="pill bad">✗ fout</span>
+    <span class="pill miss">◻ vergeten aan te vinken</span>
   </div>
-
-  <div id="result" class="score"></div>
-  <div id="mistakes" class="mistakes"></div>
-
-  <div id="rule-box"></div>
 </div>
-
 </div>
 
 <script>
 const DIVS=[2,3,4,5,6,8,9,10,12];
-const RULES={
-2:{t:"Deelbaar door 2",x:"Laatste cijfer is even (0,2,4,6,8).",e:"Voorbeeld: 98 → 8 is even → deelbaar door 2."},
-3:{t:"Deelbaar door 3",x:"Som van cijfers is deelbaar door 3.",e:"Voorbeeld: 483 → 4+8+3=15 → deelbaar door 3."},
-4:{t:"Deelbaar door 4",x:"Laatste twee cijfers vormen een getal deelbaar door 4.",e:"Voorbeeld: 132 → 32 is deelbaar door 4."},
-5:{t:"Deelbaar door 5",x:"Laatste cijfer is 0 of 5.",e:"Voorbeelden: 78435, 54720."},
-6:{t:"Deelbaar door 6",x:"Deelbaar door 2 én door 3.",e:"Voorbeeld: 684 is even en 6+8+4=18 → deelbaar door 3."},
-8:{t:"Deelbaar door 8",x:"Laatste drie cijfers vormen getal deelbaar door 8.",e:"Voorbeeld: 7160 → 160 is deelbaar door 8."},
-9:{t:"Deelbaar door 9",x:"Som van cijfers is deelbaar door 9.",e:"Voorbeeld: 6588 → 6+5+8+8=27 → deelbaar door 9."},
-10:{t:"Deelbaar door 10",x:"Laatste cijfer is 0.",e:""},
-12:{t:"Deelbaar door 12",x:"Deelbaar door 3 én door 4.",e:""}
-};
 
 let numbers=[];
 let checked=[];
 let graded=false;
 
-function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
-function hasDiv(n){return DIVS.some(d=>n%d===0);}
-function divsOf(n){return DIVS.filter(d=>n%d===0);}
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function hasDiv(n){ return DIVS.some(d=>n%d===0); }
+function divsOf(n){ return DIVS.filter(d=>n%d===0); }
 
 function newExercise(){
   numbers=[];
@@ -115,20 +137,27 @@ function newExercise(){
     let x=rand(1000,999999);
     if(hasDiv(x)) numbers.push(x);
   }
-  checked=numbers.map(()=>{let o={};DIVS.forEach(d=>o[d]=false);return o;});
+
+  checked=numbers.map(()=> {
+    let o={}; DIVS.forEach(d=>o[d]=false);
+    return o;
+  });
+
   graded=false;
   buildTable();
   clearFeedback();
+
   document.querySelector("#btn-check").disabled=false;
-  document.querySelector("#btn-reset").disabled=false;
+  document.querySelector("#btn-pdf").disabled=true;
 }
 
 function buildTable(){
   let html="<table><thead><tr><th>Getal</th>";
-  for(const d of DIVS){
-    html+=`<th><span class="hdr-btn" onclick="showRule(${d})">/${d}</span></th>`;
-  }
+  DIVS.forEach(d=>{
+    html+=`<th>/${d}</th>`;
+  });
   html+="</tr></thead><tbody>";
+
   numbers.forEach((n,i)=>{
     html+=`<tr><td>${n}</td>`;
     DIVS.forEach(d=>{
@@ -136,6 +165,7 @@ function buildTable(){
     });
     html+="</tr>";
   });
+
   html+="</tbody></table>";
   document.querySelector("#exercise").innerHTML=html;
 
@@ -148,17 +178,11 @@ function buildTable(){
   });
 }
 
-function showRule(d){
-  let r=RULES[d];
-  document.querySelector("#rule-box").innerHTML=
-    `<div class="rule-box"><div class="rule-title">/${d} — ${r.t}</div>${r.x}<br><i>${r.e}</i></div>`;
-}
-
 function clearFeedback(){
   graded=false;
   document.querySelector("#result").innerHTML="";
   document.querySelector("#mistakes").innerHTML="";
-  document.querySelectorAll("td.cell").forEach(td=>{
+  document.querySelectorAll(".cell").forEach(td=>{
     td.classList.remove("correct","wrong-checked","wrong-missed");
   });
 }
@@ -170,12 +194,13 @@ function grade(){
 
   numbers.forEach((n,i)=>{
     let real=new Set(divsOf(n));
-    let rowMist=[];
+    let rowErrors=[];
 
     let tds=document.querySelectorAll(`tbody tr:nth-child(${i+1}) td.cell`);
-    let k=0;
+    let idx=0;
+
     DIVS.forEach(d=>{
-      let td=tds[k++];
+      let td=tds[idx++];
       let want=real.has(d);
       let got=checked[i][d];
       total++;
@@ -188,31 +213,41 @@ function grade(){
         correct++;
       }else if(!want && got){
         td.classList.add("wrong-checked");
-        rowMist.push("/"+d);
+        rowErrors.push("/"+d);
       }else if(want && !got){
         td.classList.add("wrong-missed");
-        rowMist.push("/"+d);
+        rowErrors.push("/"+d);
       }
     });
-    if(rowMist.length){
-      mistakes.push(`Getal ${n}: fout bij ${rowMist.join(", ")}`);
+
+    if(rowErrors.length>0){
+      mistakes.push(`Getal ${n}: fout bij ${rowErrors.join(", ")}`);
     }
   });
 
   document.querySelector("#result").innerHTML=`Score: ${correct} / ${total}`;
-  document.querySelector("#mistakes").innerHTML=
-    mistakes.length ? `<b>Overzicht fouten:</b><br>${mistakes.join("<br>")}` : "Mooi! Alles correct.";
+  document.querySelector("#btn-pdf").disabled=false;
+
+  if(mistakes.length){
+    document.querySelector("#mistakes").innerHTML=
+      `<b>Overzicht fouten:</b><br>${mistakes.join("<br>")}`;
+  } else {
+    document.querySelector("#mistakes").innerHTML="Perfect! Alles juist.";
+  }
 }
 
-document.querySelector("#btn-new").onclick=newExercise;
-document.querySelector("#btn-check").onclick=grade;
-document.querySelector("#btn-reset").onclick=()=>{
-  checked.forEach(r=>DIVS.forEach(d=>r[d]=false));
-  document.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false);
-  clearFeedback();
-};
+function printPDF(){
+  window.print();
+}
 
-newExercise();
+// EVENT LISTENERS
+window.addEventListener("DOMContentLoaded", () => {
+  document.querySelector("#btn-new").addEventListener("click", newExercise);
+  document.querySelector("#btn-check").addEventListener("click", grade);
+  document.querySelector("#btn-pdf").addEventListener("click", printPDF);
+
+  newExercise();
+});
 </script>
 
 </body>
