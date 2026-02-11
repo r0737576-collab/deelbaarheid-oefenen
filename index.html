@@ -88,8 +88,11 @@
       position:absolute; top:0; left:0;
       width:100%;
     }
-    button, .legend, #rule-box{
-      display:none !important;
+   @media print {
+  #rule-box {
+    display: none !important;
+  }
+} 
     }
   }
 </style>
@@ -111,7 +114,8 @@
     <div id="result" class="score"></div>
     <div id="mistakes" class="mistakes"></div>
   </div>
-
+<div id="rule-box"></div>
+  
   <div class="legend">
     <span class="pill ok">✓ correct</span>
     <span class="pill bad">✗ fout</span>
