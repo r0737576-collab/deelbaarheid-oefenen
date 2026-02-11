@@ -77,22 +77,25 @@
   .wrong-missed{ outline:2px solid var(--warn); }
 
   /* PRINT MODE */
-  @media print {
-    body *{
-      visibility:hidden !important;
-    }
-    #print-area, #print-area *{
-      visibility:visible !important;
-    }
-    #print-area{
-      position:absolute; top:0; left:0;
-      width:100%;
-    }
-   @media print {
-  #rule-box {
-    display: none !important;
+@media print {
+  body *{
+    visibility:hidden !important;
   }
-} 
+  #print-area, #print-area *{
+    visibility:visible !important;
+  }
+  #print-area{
+    position:absolute; top:0; left:0; width:100%;
+  }
+  button, .legend{
+    display:none !important;
+  }
+  /* Verberg uitleg in PDF */
+  #rule-box{
+    display:none !important;
+  }
+}
+</style>
     }
   }
 </style>
